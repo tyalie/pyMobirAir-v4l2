@@ -4,6 +4,7 @@ from .usb_wrapper import MobirAirUSBWrapper
 from .types import Frame
 from .parser import MobirAirParser
 from .image_processor import ThermalFrameProcessor
+from .protocol import MobirAirUSBProtocol
 import time
 
 from threading import Thread, Event
@@ -18,6 +19,8 @@ class MobirAirDriver:
 
     dev = MobirAirUSBWrapper.find_device()
     self._usb = MobirAirUSBWrapper(dev)
+    self._protocol = MobirAirUSBProtocol(self._usb)
+
     self._parser = MobirAirParser(self.WIDTH, self.HEIGHT)
     self._img_proc = ThermalFrameProcessor(self.WIDTH, self.HEIGHT)
 
@@ -46,21 +49,23 @@ class MobirAirDriver:
   def set_frame_listener(self, listener: Callable[[Frame], None]):
     self._listener = listener
 
+  def getAllKData(self, number: int):
+    img_size = 2 * self.WIDTH * self.HEIGHT * number
+    return self._protocol.get_arm_param(300 * 0x800, img_size)
+
   def start_stream(self):
     self._enable_recv_thread.set()
-    self._usb.epo.write("StartX=1")
+    self._protocol.setStream(True)
     time.sleep(1)
-    #self._usb.epo.write("SetDetectIndex=\x02\x00")
-    #time.sleep(1)
-    self._usb.epo.write("ShutterOff=1")
+    self._protocol.setShutter(True)
     time.sleep(1)
-    self._usb.epo.write("DoNUC=1")
+    self._protocol.doNUC()
     time.sleep(2)
-    self._usb.epo.write("ShutterOn=1")
+    self._protocol.setShutter(False)
     time.sleep(1)
 
   def stop_stream(self):
-    self._usb.epo.write("StopX=1\r")
+    self._protocol.setStream(False)
     self._enable_recv_thread.clear()
 
   def _read_data_listener(self, should_process: Event):
@@ -84,4 +89,3 @@ class MobirAirDriver:
       except usb.core.USBError as e:
         print("Stopping receive")
         raise e
-
