@@ -8,6 +8,9 @@ class MobirAirUSBWrapper:
     self._init()
 
   def _init(self):
+    # reset device state
+    self._dev.reset()
+
     # set active configuration, as there's only one use that
     self._dev.set_configuration()
 
@@ -42,6 +45,9 @@ class MobirAirUSBWrapper:
   def epi(self) -> usb.core.Endpoint:
     return self._endpoint_in
 
+  def __del__(self):
+    print("disposing")
+    usb.util.dispose_resources(self._dev)
 
   @staticmethod
   def find_device() -> usb.core.Device:

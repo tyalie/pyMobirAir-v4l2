@@ -27,6 +27,22 @@ class MobirAirDriver:
       target=self._read_data_listener, args=(self._enable_recv_thread,))
     self._recv_thread.start()
 
+    # clear usb queue
+    self.clear_device()
+
+  def clear_device(self):
+    self._protocol.setShutter(True)
+    self._protocol.setStream(False)
+    time.sleep(0.1)
+    self._protocol.setStream(False)
+    time.sleep(0.1)
+
+    while True:
+      try:
+        self._usb.epi.read(self._usb.epi.wMaxPacketSize, 100)
+      except usb.core.USBTimeoutError:
+        return
+
   def set_frame_listener(self, listener: Callable[[Frame], None]):
     self._listener = listener
 
