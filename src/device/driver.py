@@ -3,6 +3,7 @@ import usb.core
 from .usb_wrapper import MobirAirUSBWrapper
 from .types import Frame
 from .parser import MobirAirParser
+from .image_processor import ThermalFrameProcessor
 import time
 
 from threading import Thread
@@ -18,6 +19,7 @@ class MobirAirDriver:
     dev = MobirAirUSBWrapper.find_device()
     self._usb = MobirAirUSBWrapper(dev)
     self._parser = MobirAirParser(self.WIDTH, self.HEIGHT)
+    self._img_proc = ThermalFrameProcessor(self.WIDTH, self.HEIGHT)
 
     # register incoming data listener
     self._recv_thread = Thread(target=self._read_data_listener)
@@ -48,10 +50,13 @@ class MobirAirDriver:
         data = self._usb.epi.read(128, timeout=200)
         data = data.tobytes()
 
-        frame = self._parser.parse_stream(data)
+        raw_frame = self._parser.parse_stream(data)
 
-        if frame is not None and self._listener is not None:
-          self._listener(frame)
+        if raw_frame is not None:
+          frame = self._img_proc.process(raw_frame)
+
+          if self._listener is not None:
+            self._listener(frame)
       except usb.core.USBTimeoutError:
         print("timeout")
         ...

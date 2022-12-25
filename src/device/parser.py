@@ -1,7 +1,7 @@
 from typing import Optional
 import numpy as np
 
-from device.types import Frame
+from device.types import FixedParamLine, RawFrame
 
 class MobirAirParser:
   FRAME_START = bytes.fromhex("55aa2700")
@@ -13,7 +13,7 @@ class MobirAirParser:
     self.width = width
     self.height = height
 
-  def parse_stream(self, raw: bytes) -> Optional[Frame]:
+  def parse_stream(self, raw: bytes) -> Optional[RawFrame]:
     self._stream.extend(raw)
     i = self._stream.find(self.FRAME_START)
 
@@ -28,20 +28,18 @@ class MobirAirParser:
 
     return None
 
-  def _parse_frame(self, raw: bytes) -> Frame:
-    width = int.from_bytes(raw[4:6], byteorder="little", signed=False)
-    height = int.from_bytes(raw[6:8], byteorder="little", signed=False)
+  def _parse_frame(self, raw: bytes) -> RawFrame:
+    header = raw[:self.FRAME_HEADER_LENGTH]
+    fixedParam = FixedParamLine.new(header)
 
-    if width != self.width or height != self.height:
-      raise Exception(f"Frame parser came across frame with invalid size {width}x{height}")
+    if fixedParam.width != self.width or fixedParam.height != self.height:
+      raise Exception(f"Frame parser came across frame with invalid size {fixedParam.width}x{fixedParam.height}")
 
-    payload = raw[self.FRAME_HEADER_LENGTH:]
-    image = np.frombuffer(payload, dtype="<u2")
 
-    return Frame(
-      header=raw[:self.FRAME_HEADER_LENGTH],
-      payload=payload,
-      image=image.reshape((width, height))
+    return RawFrame(
+      header=header,
+      payload=raw[self.FRAME_HEADER_LENGTH:],
+      fixedParam=fixedParam
     )
 
   @property
