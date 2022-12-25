@@ -6,7 +6,7 @@ from .parser import MobirAirParser
 from .image_processor import ThermalFrameProcessor
 import time
 
-from threading import Thread
+from threading import Thread, Event
 
 
 class MobirAirDriver:
@@ -22,14 +22,16 @@ class MobirAirDriver:
     self._img_proc = ThermalFrameProcessor(self.WIDTH, self.HEIGHT)
 
     # register incoming data listener
-    self._recv_thread = Thread(target=self._read_data_listener)
+    self._enable_recv_thread = Event()
+    self._recv_thread = Thread(
+      target=self._read_data_listener, args=(self._enable_recv_thread,))
     self._recv_thread.start()
 
   def set_frame_listener(self, listener: Callable[[Frame], None]):
     self._listener = listener
 
   def start_stream(self):
-    self.stop_stream()
+    self._enable_recv_thread.set()
     self._usb.epo.write("StartX=1")
     time.sleep(1)
     #self._usb.epo.write("SetDetectIndex=\x02\x00")
@@ -43,9 +45,12 @@ class MobirAirDriver:
 
   def stop_stream(self):
     self._usb.epo.write("StopX=1\r")
+    self._enable_recv_thread.clear()
 
-  def _read_data_listener(self):
+  def _read_data_listener(self, should_process: Event):
     while True:
+      should_process.wait()
+
       try:
         data = self._usb.epi.read(128, timeout=200)
         data = data.tobytes()
