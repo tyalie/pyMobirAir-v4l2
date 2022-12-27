@@ -47,7 +47,20 @@ class MobirAirUSBProtocol:
   def doNUC(self):
     self._usb.epo.write("DoNUC=1")
 
+  def setChangeR(self, Ridx: int):
+    cmd = b"SetDetectIndex=" + Ridx.to_bytes(byteorder="little", length=2)
+    self._usb.epo.write(cmd)
+
   ##### data from device #####
   def getAllKData(self, width: int, height: int, number: int) -> bytes:
     img_size = 2 * width * height * number
     return self.get_arm_param(300 * 0x800, img_size)
+
+  def getJwbTabNum(self) -> int:
+    return int.from_bytes(self.get_arm_param(488 * 0x800, 2), byteorder="little")
+
+  def getJwbTabArrShort(self, number: int) -> bytes:
+    return self.get_arm_param(487 * 0x800, number * 2)
+
+  def getModuleTP(self) -> int:
+    return self.get_arm_param(490 * 0x800, 1)[0]

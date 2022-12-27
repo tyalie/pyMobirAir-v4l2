@@ -4,7 +4,7 @@ import numpy as np
 
 from device.device_state import MobirAirState
 from .usb_wrapper import MobirAirUSBWrapper
-from .types import Frame
+from .types import Frame, RawFrame
 from .parser import MobirAirParser
 from .image_processor import ThermalFrameProcessor
 from .protocol import MobirAirUSBProtocol
@@ -86,6 +86,8 @@ class MobirAirDriver:
 
   ###### stream functions ######
   def _read_data_listener(self, should_process: Event):
+    frames = 0
+
     while True:
       should_process.wait()
 
@@ -104,20 +106,77 @@ class MobirAirDriver:
 
           if self._listener is not None:
             self._listener(frame)
+
+          if frames % 25 == 0:
+            self._changeR(raw_frame)
+          frames += 1
+
       except usb.core.USBTimeoutError:
         print("timeout")
       except usb.core.USBError as e:
         print("Stopping receive")
         raise e
 
+  def _changeR(self, frame: RawFrame):
+    if self._state.module_tp is None:
+      return
+
+    realtimeTfpa = frame.fixedParam.getRealtimeFpaTemp(self._state.module_tp) * 100
+    print(realtimeTfpa)
+
+    if self._state.jwbTabArrShort is None:
+      print("warn: jwbTabArrShort not initialized")
+      return
+
+    changeRidx = 1
+    if realtimeTfpa <= self._state.jwbTabArrShort[0]:
+      changeRidx = 0
+    elif realtimeTfpa >= self._state.jwbTabArrShort[-1]:
+      changeRidx = self._state.jwbTabNumber - 1
+    else:
+      while True:
+        if realtimeTfpa < self._state.jwbTabArrShort[changeRidx]:
+          if self._state.currChangeRidx == (changeRidx - 1):
+            if not (realtimeTfpa - self._state.jwbTabArrShort[changeRidx - 1] < 50):
+              break
+
+            changeRidx -= 1
+            break
+
+          if self._state.currChangeRidx != (changeRidx - 1):
+            break
+
+          if not (self._state.jwbTabArrShort[changeRidx] - realtimeTfpa < 50):
+            break
+
+          changeRidx += 1
+          break
+
+        changeRidx += 1
+
+    if self._state.currChangeRidx != changeRidx:
+      print(f"Setting new changeRidx: {changeRidx}")
+      self._state.currChangeRidx = changeRidx
+      self._protocol.setChangeR(changeRidx)
+      # TODO: do shutter
+
 
   ###### DATA ######
   def _init_state(self):
+    # module tp
+    self._state.module_tp = self._protocol.getModuleTP()
+
+    # get jwb tab number
+    self._state.jwbTabNumber = self._protocol.getJwbTabNum()
+
+    # get jwb short array
+    tabarr = self._protocol.getJwbTabArrShort(self._state.jwbTabNumber)
+    self._state.jwbTabArrShort = np.frombuffer(tabarr, dtype="<u2")
+
     # get k data
     kdata_raw = self._protocol.getAllKData(self.WIDTH, self.HEIGHT, self._state.jwbTabNumber)
     kdata = np.frombuffer(kdata_raw, dtype="<u2") \
       .reshape((self._state.jwbTabNumber, self._state.height, self._state.width))
     self._state.allKdata = kdata
 
-
-
+    print(f"state: {self._state}")

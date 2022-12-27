@@ -44,7 +44,7 @@ class ThermalFrameProcessor:
     img = img.astype("i4")
 
     return np.floor(
-      avg + (img - self._state.shutterFrame) * self._state.allKdata[2] / 2**13
+      avg + (img - self._state.shutterFrame) * self._state.getCurrKArr() / 2**13
     ).astype("u2")
 
   def doBasicCalibration(self, img: np.ndarray) -> np.ndarray:

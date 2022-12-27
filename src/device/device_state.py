@@ -12,11 +12,16 @@ class MobirAirConfig:
 class MobirAirState:
   width: int
   height: int
-  jwbTabNumber: int = 4
+  jwbTabNumber: int = 0
 
+  currChangeRidx: int = 0
+
+  module_tp: Optional[int] = None
 
   # calibration
   allKdata: Optional[np.ndarray] = None
+
+  jwbTabArrShort: Optional[np.ndarray] = None
 
   # calibration - live
   shutterFrame: np.ndarray = field(init=False)
@@ -27,5 +32,11 @@ class MobirAirState:
   def __post_init__(self):
     # initialize calibration / shutter frame
     self.shutterFrame = np.zeros((self.height, self.width), dtype="<u2")
+
+  def getCurrKArr(self) -> np.ndarray:
+    if self.allKdata is None:
+      raise Exception
+
+    return self.allKdata[self.currChangeRidx]
 
 
