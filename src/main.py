@@ -17,9 +17,11 @@ driver = None
 
 def sigint_handler(sig, frame):
   print("Handled sigint")
-  if driver is not None:
-    driver.stop()
-  sys.exit(0)
+  try:
+    if driver is not None:
+      driver.stop()
+  finally:
+    sys.exit(0)
 
 
 def main():
