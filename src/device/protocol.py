@@ -1,6 +1,9 @@
 from typing import Optional
 from .usb_wrapper import MobirAirUSBWrapper
 
+class USBReadFailedException(Exception):
+  ...
+
 class MobirAirUSBProtocol:
   MAX_GET_ARM_LENGTH = 51200
 
@@ -8,7 +11,7 @@ class MobirAirUSBProtocol:
     self._usb = usb
     pass
 
-  def get_arm_param(self, address, length) -> Optional[bytes]:
+  def get_arm_param(self, address, length) -> bytes:
     def to_bytes(v: int) -> bytes:
       return v.to_bytes(2, "little", signed=False)
 
@@ -23,7 +26,7 @@ class MobirAirUSBProtocol:
 
       data = self._usb.retrieve_data(cmd, clength)
       if data is None:
-        return None
+        raise USBReadFailedException
       buffer.extend(data)
 
     return buffer
