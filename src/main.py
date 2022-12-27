@@ -31,14 +31,15 @@ def main():
   previous_img = None
   def listener(f: Frame):
     nonlocal previous_img
-    print(np.min(f.image), "/", np.max(f.image))
+    min = np.min(f.image[2:,:])
+    max = np.max(f.image[2:,:])
 
-    if previous_img is not None:
-      img = (np.uint32(f.image) - np.min(f.image)) * (2**16 - 1) / (np.max(f.image) - np.min(f.image))
-      img = np.uint16(img)
-      stream.write(img.tobytes(order='C'))
+    print(np.min(f.image), "/", np.max(f.image), f" / {min}-{max}")
 
-    previous_img = f.image
+
+    img = (np.uint32(f.image) - min) * (2**16 - 1) / (max - min)
+    img = np.uint16(img)
+    stream.write(img.tobytes(order='C'))
 
   driver = MobirAirDriver()
   driver.set_frame_listener(listener)
