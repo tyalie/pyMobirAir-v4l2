@@ -20,6 +20,8 @@ class MobirAirState:
 
   module_tp: Optional[int] = None
 
+  allCurveData: Optional[np.ndarray] = None
+
   # calibration
   allKdata: Optional[np.ndarray] = None
 
@@ -46,5 +48,21 @@ class MobirAirState:
       raise Exception
 
     return self.allKdata[self.currChangeRidx]
+
+  @property
+  def currCurve(self) -> Optional[np.ndarray]:
+    if self.allCurveData is None:
+      return None
+
+    n = max(1, self.currChangeRidx)
+    return self.allCurveData[n - 1]
+
+  @property
+  def nearCurve(self) -> Optional[np.ndarray]:
+    if self.allCurveData is None:
+      return None
+
+    n = max(1, self.currChangeRidx)
+    return self.allCurveData[n]
 
 

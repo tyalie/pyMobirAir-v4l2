@@ -56,6 +56,10 @@ class MobirAirUSBProtocol:
     img_size = 2 * width * height * number
     return self.get_arm_param(300 * 0x800, img_size)
 
+  def getAllCurveData(self, number: int) -> bytes:
+    size = number * 1700 * 2
+    return self.get_arm_param(462 * 0x800, size)
+
   def getJwbTabNum(self) -> int:
     return int.from_bytes(self.get_arm_param(488 * 0x800, 2), byteorder="little")
 

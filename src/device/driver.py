@@ -184,4 +184,10 @@ class MobirAirDriver:
       .reshape((self._state.jwbTabNumber, self._state.height, self._state.width))
     self._state.allKdata = kdata
 
+    # get all curve data
+    curve_raw = self._protocol.getAllCurveData(self._state.jwbTabNumber)
+    curve = np.frombuffer(curve_raw, dtype="<u2") \
+      .reshape((self._state.jwbTabNumber, 1700))
+    self._state.allCurveData = curve
+
     print(f"state: {self._state}")
