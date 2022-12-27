@@ -33,6 +33,19 @@ class MobirAirDriver:
     # clear usb queue
     self.clear_device()
 
+  def stop(self):
+    """ Method to stop the MobirAir USB device.
+    This turned out to be a bit more complicated than expected.
+    During application start the device will be resetted. This
+    seems to be troublesome, when the stream is still enabled,
+    as the device will not return anything until a power cycle.
+
+    This method seems to do the job thoo.
+    """
+    self.clear_device()
+    time.sleep(0.1)
+    del self._usb
+
   def clear_device(self):
     self._protocol.setShutter(True)
     self._protocol.setStream(False)

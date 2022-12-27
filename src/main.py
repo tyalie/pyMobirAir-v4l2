@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 from device import MobirAirDriver, Frame
 from video.loopback import create_loopback
+import signal
+import sys
 import time
 import numpy as np
 from matplotlib import pyplot as plt
@@ -11,7 +13,19 @@ def abs_diff(img1, img2):
   return a * b
 
 
+driver = None
+
+def sigint_handler(sig, frame):
+  print("Handled sigint")
+  if driver is not None:
+    driver.stop()
+  sys.exit(0)
+
+
 def main():
+  global driver
+  signal.signal(signal.SIGINT, sigint_handler)
+
   stream = create_loopback("/dev/video2", MobirAirDriver.WIDTH, MobirAirDriver.HEIGHT)
 
   previous_img = None
