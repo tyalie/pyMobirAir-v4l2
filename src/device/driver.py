@@ -1,5 +1,8 @@
 from typing import Callable
 import usb.core
+import numpy as np
+
+from device.device_state import MobirAirState
 from .usb_wrapper import MobirAirUSBWrapper
 from .types import Frame
 from .parser import MobirAirParser
@@ -17,12 +20,14 @@ class MobirAirDriver:
   def __init__(self) -> None:
     self._listener = None
 
+    self._state = MobirAirState(self.WIDTH, self.HEIGHT)
+
     dev = MobirAirUSBWrapper.find_device()
     self._usb = MobirAirUSBWrapper(dev)
     self._protocol = MobirAirUSBProtocol(self._usb)
 
-    self._parser = MobirAirParser(self.WIDTH, self.HEIGHT)
-    self._img_proc = ThermalFrameProcessor(self.WIDTH, self.HEIGHT)
+    self._parser = MobirAirParser(self._state)
+    self._img_proc = ThermalFrameProcessor(self._state)
 
     # register incoming data listener
     self._enable_recv_thread = Event()
@@ -30,8 +35,9 @@ class MobirAirDriver:
       target=self._read_data_listener, args=(self._enable_recv_thread,))
     self._recv_thread.start()
 
-    # clear usb queue
-    self.clear_device()
+    # init state
+    self._init_state()
+
 
   def stop(self):
     """ Method to stop the MobirAir USB device.
@@ -62,10 +68,6 @@ class MobirAirDriver:
   def set_frame_listener(self, listener: Callable[[Frame], None]):
     self._listener = listener
 
-  def getAllKData(self, number: int):
-    img_size = 2 * self.WIDTH * self.HEIGHT * number
-    return self._protocol.get_arm_param(300 * 0x800, img_size)
-
   def start_stream(self):
     self._enable_recv_thread.set()
     self._protocol.setStream(True)
@@ -87,12 +89,16 @@ class MobirAirDriver:
 
       try:
         data = self._usb.epi.read(128, timeout=200)
+        _t_start = time.monotonic_ns()
         data = data.tobytes()
 
         raw_frame = self._parser.parse_stream(data)
 
         if raw_frame is not None:
           frame = self._img_proc.process(raw_frame)
+
+          _t_end = time.monotonic_ns()
+          print(f"Δt = {(_t_end - _t_start) / 1e6:.2f}ms")
 
           if self._listener is not None:
             self._listener(frame)
@@ -102,3 +108,18 @@ class MobirAirDriver:
       except usb.core.USBError as e:
         print("Stopping receive")
         raise e
+
+
+  ###### DATA ######
+  def _init_state(self):
+    # get k data
+    kdata_raw = self.getAllKData(self._state.jwbTabNumber)
+    kdata = np.frombuffer(kdata_raw, dtype="<u2") \
+      .reshape((self._state.jwbTabNumber, self._state.height, self._state.width))
+    self._state.allKdata = kdata
+
+
+  def getAllKData(self, number: int):
+    img_size = 2 * self.WIDTH * self.HEIGHT * number
+    return self._protocol.get_arm_param(300 * 0x800, img_size)
+

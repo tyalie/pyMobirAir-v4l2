@@ -1,27 +1,39 @@
+from device.device_state import MobirAirState
 from .types import Frame, RawFrame
 from dataclasses import asdict
 import numpy as np
 
 
 class ThermalFrameProcessor:
-  def __init__(self, width: int, height: int) -> None:
-    self.width = width
-    self.height = height
+  def __init__(self, state: MobirAirState) -> None:
+    self._state = state
 
-    # initialize calibration frame
-    self._calibration = np.zeros((self.width, self.height), dtype="<i4")
 
   def process(self, frame: RawFrame) -> Frame:
     image = np.frombuffer(frame.payload, dtype="<u2") \
-      .reshape((self.width, self.height))
+      .reshape((self._state.height, self._state.width))
 
     if frame.fixedParam.isShuttering:
-      cal_img = image.astype("i4") - np.average(image)
-      self._calibration = (self._calibration * 70 + cal_img * 30) // 100
+      self._handleShutter(image)
     else:
-      image = (image - self._calibration).astype(image.dtype)
+      image = self._normal_processing(image)
 
     return Frame(
       image=image,
       **frame.__dict__
     )
+
+  def _handleShutter(self, img: np.ndarray):
+    self._state.shutterFrame = img
+
+  def _normal_processing(self, img: np.ndarray) -> np.ndarray:
+    img = self.doBasicCalibration(img)
+
+    return img
+
+  def doBasicCalibration(self, img: np.ndarray) -> np.ndarray:
+    avg = np.average(self._state.shutterFrame)
+    img = img.astype("i4")
+
+    return (avg + (img - self._state.shutterFrame)).astype("<u2")
+

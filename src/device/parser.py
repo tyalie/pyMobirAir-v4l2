@@ -1,5 +1,6 @@
 from typing import Optional
 import numpy as np
+from device.device_state import MobirAirState
 
 from device.types import FixedParamLine, RawFrame
 
@@ -8,10 +9,10 @@ class MobirAirParser:
   FRAME_HEADER_LENGTH = 240
   IMAGE_DEPTH = 2
 
-  def __init__(self, width: int, height: int) -> None:
+  def __init__(self, state: MobirAirState) -> None:
     self._stream: bytearray = bytearray()
-    self.width = width
-    self.height = height
+    self.width = state.width
+    self.height = state.height
 
   def parse_stream(self, raw: bytes) -> Optional[RawFrame]:
     self._stream.extend(raw)
