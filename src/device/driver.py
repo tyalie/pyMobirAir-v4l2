@@ -119,6 +119,13 @@ class MobirAirDriver:
         raise e
 
   def _changeR(self, frame: RawFrame):
+    """Method to change detect index
+    Seems to depend on the fpa temperature, using the
+    jwb short array.
+
+    The detect index is relevant for the camera and the
+    raw value processing (e.g. selects k data frame)
+    """
     if self._state.module_tp is None:
       return
 
