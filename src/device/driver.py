@@ -141,14 +141,14 @@ class MobirAirDriver:
     else:
       while True:
         if realtimeTfpa < self._state.jwbTabArrShort[changeRidx]:
-          if self._state.currChangeRidx == (changeRidx - 1):
+          if self._state.currChangeRTfpgIdx == (changeRidx - 1):
             if not (realtimeTfpa - self._state.jwbTabArrShort[changeRidx - 1] < 50):
               break
 
             changeRidx -= 1
             break
 
-          if self._state.currChangeRidx != (changeRidx - 1):
+          if self._state.currChangeRTfpgIdx != (changeRidx - 1):
             break
 
           if not (self._state.jwbTabArrShort[changeRidx] - realtimeTfpa < 50):
@@ -159,9 +159,9 @@ class MobirAirDriver:
 
         changeRidx += 1
 
-    if self._state.currChangeRidx != changeRidx:
+    if self._state.currChangeRTfpgIdx != changeRidx:
       print(f"Setting new changeRidx: {changeRidx}")
-      self._state.currChangeRidx = changeRidx
+      self._state.currChangeRTfpgIdx = changeRidx
       self._protocol.setChangeR(changeRidx)
       self._shutter.manualShutter()
 

@@ -16,7 +16,7 @@ class MobirAirState:
   height: int
   jwbTabNumber: int = 0
 
-  currChangeRidx: int = 0
+  currChangeRTfpgIdx: int = 0
 
   module_tp: Optional[int] = None
 
@@ -47,14 +47,14 @@ class MobirAirState:
     if self.allKdata is None:
       raise Exception
 
-    return self.allKdata[self.currChangeRidx]
+    return self.allKdata[self.currChangeRTfpgIdx]
 
   @property
   def currCurve(self) -> Optional[np.ndarray]:
     if self.allCurveData is None:
       return None
 
-    n = max(1, self.currChangeRidx)
+    n = max(1, self.currChangeRTfpgIdx)
     return self.allCurveData[n - 1]
 
   @property
@@ -62,7 +62,7 @@ class MobirAirState:
     if self.allCurveData is None:
       return None
 
-    n = max(1, self.currChangeRidx)
+    n = max(1, self.currChangeRTfpgIdx)
     return self.allCurveData[n]
 
 
