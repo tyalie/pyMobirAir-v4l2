@@ -27,13 +27,27 @@ class ThermalFrameProcessor:
     self._state.shutterFrame = img
 
   def _normal_processing(self, img: np.ndarray) -> np.ndarray:
-    img = self.doBasicCalibration(img)
+    img = self.doNUCbyTwoPoint(img)
 
     return img
+
+  def doNUCbyTwoPoint(self, img: np.ndarray) -> np.ndarray:
+    if self._state.allKdata is None:
+      print("Error: allKdata is none")
+      return img
+
+    # `∀i: y16arr[i] = ⌊ avgSingleB + (frame[i] - bArr[i]) * kArr[i] / 2¹³ ⌋`
+    avg = np.average(self._state.shutterFrame)
+    img = img.astype("i4")
+
+    return np.floor(
+      avg + (img - self._state.shutterFrame) * self._state.allKdata[2] / 2**13
+    ).astype("u2")
 
   def doBasicCalibration(self, img: np.ndarray) -> np.ndarray:
     avg = np.average(self._state.shutterFrame)
     img = img.astype("i4")
 
     return (avg + (img - self._state.shutterFrame)).astype("<u2")
+
 
