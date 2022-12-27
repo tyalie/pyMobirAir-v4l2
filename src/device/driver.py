@@ -3,6 +3,7 @@ import usb.core
 import numpy as np
 
 from device.device_state import MobirAirState
+from device.shutterhandling import ShutterHandler
 from .usb_wrapper import MobirAirUSBWrapper
 from .types import Frame, RawFrame
 from .parser import MobirAirParser
@@ -28,6 +29,7 @@ class MobirAirDriver:
 
     self._parser = MobirAirParser(self._state)
     self._img_proc = ThermalFrameProcessor(self._state)
+    self._shutter = ShutterHandler(self._protocol, self._state)
 
     # register incoming data listener
     self._enable_recv_thread = Event()
@@ -71,13 +73,7 @@ class MobirAirDriver:
   def start_stream(self):
     self._enable_recv_thread.set()
     self._protocol.setStream(True)
-    time.sleep(1)
-    self._protocol.setShutter(True)
-    time.sleep(1)
-    self._protocol.doNUC()
-    time.sleep(2)
-    self._protocol.setShutter(False)
-    time.sleep(1)
+    self._shutter.doShutter()
 
   def stop_stream(self):
     self._protocol.setStream(False)
@@ -97,6 +93,7 @@ class MobirAirDriver:
         data = data.tobytes()
 
         raw_frame = self._parser.parse_stream(data)
+        self._state.lastFrame = raw_frame
 
         if raw_frame is not None:
           frame = self._img_proc.process(raw_frame)
@@ -166,7 +163,7 @@ class MobirAirDriver:
       print(f"Setting new changeRidx: {changeRidx}")
       self._state.currChangeRidx = changeRidx
       self._protocol.setChangeR(changeRidx)
-      # TODO: do shutter
+      self._shutter.manualShutter()
 
 
   ###### DATA ######

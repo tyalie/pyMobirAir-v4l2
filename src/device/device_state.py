@@ -2,6 +2,8 @@ from typing import Optional
 import numpy as np
 from dataclasses import dataclass, field
 
+from device.types import RawFrame
+
 @dataclass
 class MobirAirConfig:
   doNUC: bool = True
@@ -28,6 +30,12 @@ class MobirAirState:
 
   # program config
   config: MobirAirConfig = field(default_factory=MobirAirConfig)
+
+  # values
+  lastShutterTfpa: int = 0
+  lastShutterTlens: int = 0
+
+  lastFrame: Optional[RawFrame] = None
 
   def __post_init__(self):
     # initialize calibration / shutter frame
