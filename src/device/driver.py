@@ -83,6 +83,8 @@ class MobirAirDriver:
     self._protocol.setStream(False)
     self._enable_recv_thread.clear()
 
+
+  ###### stream functions ######
   def _read_data_listener(self, should_process: Event):
     while True:
       should_process.wait()
@@ -104,7 +106,6 @@ class MobirAirDriver:
             self._listener(frame)
       except usb.core.USBTimeoutError:
         print("timeout")
-        ...
       except usb.core.USBError as e:
         print("Stopping receive")
         raise e
@@ -113,13 +114,10 @@ class MobirAirDriver:
   ###### DATA ######
   def _init_state(self):
     # get k data
-    kdata_raw = self.getAllKData(self._state.jwbTabNumber)
+    kdata_raw = self._protocol.getAllKData(self.WIDTH, self.HEIGHT, self._state.jwbTabNumber)
     kdata = np.frombuffer(kdata_raw, dtype="<u2") \
       .reshape((self._state.jwbTabNumber, self._state.height, self._state.width))
     self._state.allKdata = kdata
 
 
-  def getAllKData(self, number: int):
-    img_size = 2 * self.WIDTH * self.HEIGHT * number
-    return self._protocol.get_arm_param(300 * 0x800, img_size)
 

@@ -46,3 +46,8 @@ class MobirAirUSBProtocol:
 
   def doNUC(self):
     self._usb.epo.write("DoNUC=1")
+
+  ##### data from device #####
+  def getAllKData(self, width: int, height: int, number: int) -> bytes:
+    img_size = 2 * width * height * number
+    return self.get_arm_param(300 * 0x800, img_size)
