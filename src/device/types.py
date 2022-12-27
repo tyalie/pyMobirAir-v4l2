@@ -3,17 +3,17 @@ import dataclasses
 from dataclasses import dataclass
 import numpy as np
 
-def bytefield(location: int, length: int, order: str = "little", signed: bool = False):
+def bytefield(location: int, length: int = 2, order: str = "little", signed: bool = False):
   return dataclasses.field(
     metadata=dict(location=location, length=length, order=order, signed=signed)
   )
 
 @dataclass()
 class FixedParamLine:
-  width: int = bytefield(0x4,2)
-  height: int = bytefield(0x6,2)
+  width: int = bytefield(0x4)
+  height: int = bytefield(0x6)
   device_name: str = bytefield(0x8, 8)
-  isShuttering: bool = bytefield(0x18, 2)
+  isShuttering: bool = bytefield(0x18)
 
   @classmethod
   def new(cls, raw: bytes) -> 'FixedParamLine':
