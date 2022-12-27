@@ -2,6 +2,11 @@ from typing import Optional
 import numpy as np
 from dataclasses import dataclass, field
 
+@dataclass
+class MobirAirConfig:
+  doNUC: bool = True
+  useCalib: bool = True
+
 
 @dataclass
 class MobirAirState:
@@ -15,6 +20,9 @@ class MobirAirState:
 
   # calibration - live
   shutterFrame: np.ndarray = field(init=False)
+
+  # program config
+  config: MobirAirConfig = field(default_factory=MobirAirConfig)
 
   def __post_init__(self):
     # initialize calibration / shutter frame

@@ -27,7 +27,10 @@ class ThermalFrameProcessor:
     self._state.shutterFrame = img
 
   def _normal_processing(self, img: np.ndarray) -> np.ndarray:
-    img = self.doNUCbyTwoPoint(img)
+    if self._state.config.doNUC:
+      img = self.doNUCbyTwoPoint(img)
+    elif self._state.config.useCalib:
+      img = self.doBasicCalibration(img)
 
     return img
 
