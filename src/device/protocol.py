@@ -62,5 +62,8 @@ class MobirAirUSBProtocol:
   def getJwbTabArrShort(self, number: int) -> bytes:
     return self.get_arm_param(487 * 0x800, number * 2)
 
+  def getDeviceSN(self) -> bytes:
+    return self.get_arm_param(489 * 0x800, 14)
+
   def getModuleTP(self) -> int:
     return self.get_arm_param(490 * 0x800, 1)[0]
