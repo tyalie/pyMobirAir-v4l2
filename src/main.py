@@ -34,7 +34,7 @@ def main():
     print(np.min(f.image), "/", np.max(f.image))
 
     if previous_img is not None:
-      img = (np.uint32(f.image) - np.min(f.image)) * 2**16 / (np.max(f.image) - np.min(f.image))
+      img = (np.uint32(f.image) - np.min(f.image)) * (2**16 - 1) / (np.max(f.image) - np.min(f.image))
       img = np.uint16(img)
       stream.write(img.tobytes(order='C'))
 
