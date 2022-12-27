@@ -88,7 +88,7 @@ class MobirAirDriver:
       should_process.wait()
 
       try:
-        data = self._usb.epi.read(128, timeout=200)
+        data = self._usb.epi.read(8192, timeout=200)
         _t_start = time.monotonic_ns()
         data = data.tobytes()
 
