@@ -65,6 +65,7 @@ class CustomParamLine:
   frequency_hz: int = bitfield(0x6a, 0xf0)
 
   autotiming_shutter: bool = bitfield(0x6c, 0b1)
+  timing_shutter_time: int = bytefield(0x6e)
 
   ks: int = bytefield(0x90)
   k0: int = bytefield(0x92)
