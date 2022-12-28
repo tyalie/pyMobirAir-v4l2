@@ -28,61 +28,23 @@ def main():
   global driver
   signal.signal(signal.SIGINT, sigint_handler)
 
-  stream = create_loopback("/dev/video2", MobirAirDriver.WIDTH, MobirAirDriver.HEIGHT)
-
-  previous_img = None
+  stream = create_loopback("/dev/video2", MobirAirDriver.WIDTH, MobirAirDriver.HEIGHT - MobirAirDriver.REF_HEIGHT)
+  frame_count = 0
   def listener(f: Frame):
-    nonlocal previous_img
-    min = np.min(f.image[2:,:])
-    max = np.max(f.image[2:,:])
+    nonlocal frame_count
 
-    print(np.min(f.image), "/", np.max(f.image), f" / {min}-{max}")
+    if frame_count % 25 == 0:
+      print(f"Δtemps = {np.min(f.image) / 100} - {np.max(f.image) / 100} °C")
+    frame_count += 1
 
-
-    img = (np.uint32(f.image) - min) * (2**16 - 1) / (max - min)
-    img = np.uint16(img)
-    stream.write(img.tobytes(order='C'))
+    stream.write(f.image.tobytes(order='C'))
 
   driver = MobirAirDriver()
   driver.set_frame_listener(listener)
   driver.stop_stream()
-  #time.sleep(0.2)
-
-  img_size = 120 * 92 * 2
-  data = driver.getAllKData(4)
-  if data is not None:
-    for n in range(4):
-      img = np.frombuffer(data[n*img_size: (n+1) * img_size], dtype="<u2").reshape((92, 120))
-      plt.imshow(img)
-      plt.show()
+  print("Device:", driver._protocol.getDeviceSN().decode("UTF-8"))
 
   driver.start_stream()
-
-  import termios, fcntl, sys, os
-  fd = sys.stdin.fileno()
-
-  oldterm = termios.tcgetattr(fd)
-  newattr = termios.tcgetattr(fd)
-  newattr[3] = newattr[3] & ~termios.ICANON & ~termios.ECHO
-  termios.tcsetattr(fd, termios.TCSANOW, newattr)
-
-  oldflags = fcntl.fcntl(fd, fcntl.F_GETFL)
-  fcntl.fcntl(fd, fcntl.F_SETFL, oldflags | os.O_NONBLOCK)
-
-  try:
-    conf = driver._state.config
-    while 1:
-      try:
-        c = sys.stdin.read(1)
-        match c:
-          case "n":
-            conf.doNUC = not conf.doNUC
-          case "c":
-            conf.useCalib = not conf.useCalib
-      except IOError: pass
-  finally:
-    termios.tcsetattr(fd, termios.TCSAFLUSH, oldterm)
-    fcntl.fcntl(fd, fcntl.F_SETFL, oldflags)
 
 
 if __name__ == "__main__":

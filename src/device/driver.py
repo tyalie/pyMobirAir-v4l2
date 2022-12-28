@@ -103,7 +103,7 @@ class MobirAirDriver:
           frame = self._img_proc.process(raw_frame)
 
           _t_end = time.monotonic_ns()
-          if _t_end - _t_start > 2e6:
+          if _t_end - _t_start > 15e6:
             print(f"Δt = {(_t_end - _t_start) / 1e6:.2f}ms")
 
           if self._listener is not None:
