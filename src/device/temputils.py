@@ -35,7 +35,7 @@ class MobirAirTempUtils:
   def y16toTemp(self, y16: np.ndarray):
     param = self._state.measureParam
 
-    rawTemp = y16 - param.avgB
+    rawTemp = y16 - np.average(self._state.shutterFrame)
 
     _temp = rawTemp - int((
       (param.kj / 100) * (param.realtimeTlens - param.lastShutterTlens)
@@ -47,14 +47,14 @@ class MobirAirTempUtils:
     _jwbArr = self._state.jwbTabArrShort
     _i = param.currChangeRTfpgIdx
     if _i == 0:
-        _t1 = param.realTimeTfpa * 100 - _jwbArr[0]
-        _t2 = _jwbArr[1] - param.realTimeTfpa * 100
-    elif param.jwbLength - 1 == _i:
-        _t1 = _jwbArr[_i - 1] - param.realTimeTfpa * 100
-        _t2 = param.realTimeTfpa * 100 - _jwbArr[_i]
+        _t1 = param.realtimeTfpa * 100 - _jwbArr[0]
+        _t2 = _jwbArr[1] - param.realtimeTfpa * 100
+    elif self._state.jwbTabNumber - 1 == _i:
+        _t1 = _jwbArr[_i - 1] - param.realtimeTfpa * 100
+        _t2 = param.realtimeTfpa * 100 - _jwbArr[_i]
     else:
-        _t1 = _jwbArr[_i] - param.realTimeTfpa * 100
-        _t2 = param.realTimeTfpa * 100 - _jwbArr[_i - 1]
+        _t1 = _jwbArr[_i] - param.realtimeTfpa * 100
+        _t2 = param.realtimeTfpa * 100 - _jwbArr[_i - 1]
 
     _td = _t1 + _t2
     return _tcurr * (1 - _t1 / _td) + _tnear * (1 - _t2 / _td)
@@ -66,8 +66,8 @@ class MobirAirTempUtils:
     assert 0 < _idx and _idx < len(curveArr), f"{_idx} is out of bounds"
     cal_val = curveArr[_idx]
 
-    deltaTfpaRef = param.realTimeTfpa - param.tref
-    deltaTfpaK2 = (param.realTimeTfpa - param.lastShutterTfpa) * param.k2
+    deltaTfpaRef = param.realtimeTfpa - param.tref
+    deltaTfpaK2 = (param.realtimeTfpa - param.lastShutterTfpa) * param.k2
     deltaTlens = param.realtimeTlens - param.lastShutterTlens
 
     _raw = deltaTfpaRef * values

@@ -18,6 +18,8 @@ class ThermalFrameProcessor:
     else:
       image = self._normal_processing(image)
 
+    image = self._temperature_proc(image)
+
     return Frame(
       image=image,
       **frame.__dict__
