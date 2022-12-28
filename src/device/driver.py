@@ -116,8 +116,6 @@ class MobirAirDriver:
 
           self._shutter.automaticShutter()
 
-
-
       except usb.core.USBTimeoutError:
         print("timeout")
       except usb.core.USBError as e:
