@@ -18,11 +18,12 @@ from threading import Thread, Event
 class MobirAirDriver:
   WIDTH = 120
   HEIGHT = 92
+  REF_HEIGHT = 2
 
   def __init__(self) -> None:
     self._listener = None
 
-    self._state = MobirAirState(self.WIDTH, self.HEIGHT)
+    self._state = MobirAirState(self.WIDTH, self.HEIGHT, self.REF_HEIGHT)
 
     dev = MobirAirUSBWrapper.find_device()
     self._usb = MobirAirUSBWrapper(dev)

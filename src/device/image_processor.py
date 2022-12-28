@@ -12,6 +12,8 @@ class ThermalFrameProcessor:
   def process(self, frame: RawFrame) -> Frame:
     image = np.frombuffer(frame.payload, dtype="<u2") \
       .reshape((self._state.height, self._state.width))
+    # remove reference rows, that are not used otherwise
+    image = image[self._state.refHeight:,:]
 
     if frame.fixedParam.isShuttering:
       self._handleShutter(image)

@@ -76,6 +76,7 @@ class MeasureParam:
 class MobirAirState:
   width: int
   height: int
+  refHeight: int
   jwbTabNumber: int = 0
 
   measureParam: MeasureParam = field(default_factory=MeasureParam)
@@ -106,13 +107,13 @@ class MobirAirState:
 
   def __post_init__(self):
     # initialize calibration / shutter frame
-    self.shutterFrame = np.zeros((self.height, self.width), dtype="<u2")
+    self.shutterFrame = np.zeros((self.height - self.refHeight, self.width), dtype="<u2")
 
   def getCurrKArr(self) -> np.ndarray:
     if self.allKdata is None:
       raise Exception
 
-    return self.allKdata[self.measureParam.currChangeRTfpgIdx]
+    return self.allKdata[self.measureParam.currChangeRTfpgIdx][self.refHeight:,:]
 
   @property
   def currCurve(self) -> np.ndarray:

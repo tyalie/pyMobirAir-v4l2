@@ -37,7 +37,6 @@ class MobirAirParser:
 
     customParam = CustomParamLine.new(header)
 
-
     return RawFrame(
       header=header,
       payload=raw[self.FRAME_HEADER_LENGTH:],
