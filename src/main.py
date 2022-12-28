@@ -3,9 +3,7 @@ from device import MobirAirDriver, Frame
 from video.loopback import create_loopback
 import signal
 import sys
-import time
 import numpy as np
-from matplotlib import pyplot as plt
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
