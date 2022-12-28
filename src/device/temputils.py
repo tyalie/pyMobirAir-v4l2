@@ -33,6 +33,8 @@ class MobirAirTempUtils:
     return int(poly * 100) / 100
 
   def y16toTemp(self, y16: np.ndarray):
+    """Convert y16 raw data frame into temperatures (°C)
+    """
     param = self._state.measureParam
 
     rawTemp = y16 - np.average(self._state.shutterFrame)

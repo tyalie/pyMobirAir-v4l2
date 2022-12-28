@@ -29,8 +29,10 @@ class ThermalFrameProcessor:
     )
 
   def _temperature_proc(self, img: np.ndarray):
+    """Get temps for raw frame and return them in Kelvin
+    """
     img = self._temp.y16toTemp(img)
-    return (img * 100).astype("i2")
+    return ((img + 273.15) * 100).astype("u2")
 
   def _handleShutter(self, img: np.ndarray):
     self._state.shutterFrame = img

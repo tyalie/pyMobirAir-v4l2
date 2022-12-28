@@ -37,7 +37,7 @@ def main():
     nonlocal frame_count
 
     if frame_count % 25 == 0:
-      logging.debug(f"Δtemps = {np.min(f.image) / 100} - {np.max(f.image) / 100} °C")
+      logging.debug(f"Δtemps = {np.min(f.image) / 100 - 273.15:.2f} - {np.max(f.image) / 100 - 273.15:.2f} °C")
     frame_count += 1
 
     stream.write(f.image.tobytes(order='C'))
