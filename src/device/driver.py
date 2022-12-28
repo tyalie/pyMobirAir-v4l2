@@ -99,8 +99,6 @@ class MobirAirDriver:
         raw_frame = self._parser.parse_stream(data)
 
         if raw_frame is not None:
-          self._state.lastFrame = raw_frame
-
           frame = self._img_proc.process(raw_frame)
 
           _t_end = time.monotonic_ns()
@@ -111,10 +109,14 @@ class MobirAirDriver:
             self._listener(frame)
 
           if frames % 25 == 0:
-            self._changeR(raw_frame)
+            self._state.measureParam.setFromFrame(raw_frame, self._state.module_tp)
+            self._changeR()
+
+            self._shutter.automaticShutter()
+            frames = 0
           frames += 1
 
-          self._shutter.automaticShutter()
+
 
       except usb.core.USBTimeoutError:
         print("timeout")
@@ -122,7 +124,7 @@ class MobirAirDriver:
         print("Stopping receive")
         raise e
 
-  def _changeR(self, frame: RawFrame):
+  def _changeR(self):
     """Method to change detect index
     Seems to depend on the fpa temperature, using the
     jwb short array.
@@ -133,7 +135,7 @@ class MobirAirDriver:
     if self._state.module_tp is None:
       return
 
-    realtimeTfpa = frame.fixedParam.getRealtimeFpaTemp(self._state.module_tp) * 100
+    realtimeTfpa = self._state.measureParam.realtimeTfpa * 100
 
     if self._state.jwbTabArrShort is None:
       print("warn: jwbTabArrShort not initialized")
@@ -147,14 +149,14 @@ class MobirAirDriver:
     else:
       while True:
         if realtimeTfpa < self._state.jwbTabArrShort[changeRidx]:
-          if self._state.currChangeRTfpgIdx == (changeRidx - 1):
+          if self._state.measureParam.currChangeRTfpgIdx == (changeRidx - 1):
             if not (realtimeTfpa - self._state.jwbTabArrShort[changeRidx - 1] < 50):
               break
 
             changeRidx -= 1
             break
 
-          if self._state.currChangeRTfpgIdx != (changeRidx - 1):
+          if self._state.measureParam.currChangeRTfpgIdx != (changeRidx - 1):
             break
 
           if not (self._state.jwbTabArrShort[changeRidx] - realtimeTfpa < 50):
@@ -165,26 +167,23 @@ class MobirAirDriver:
 
         changeRidx += 1
 
-    if self._state.currChangeRTfpgIdx != changeRidx:
+    if self._state.measureParam.currChangeRTfpgIdx != changeRidx:
       print(f"Setting new changeRidx: {changeRidx}")
-      self._state.currChangeRTfpgIdx = changeRidx
+      self._state.measureParam.currChangeRTfpgIdx = changeRidx
       self._protocol.setChangeR(changeRidx)
       self._shutter.manualShutter()
+
 
   #### shuttering ####
   def _afterShutterCallback(self, usingNUC: bool):
     self.calcMeasureKj(usingNUC)
 
   def calcMeasureKj(self, usingNUC: bool):
-    if self._state.lastFrame is None:
-      print("Warn: couldn't find last frame")
-      return
-
-    deltaTlens = (self._state.lastFrame.fixedParam.realtimeLensTemp - self._state.lastShutterTlens)
+    deltaTlens = (self._state.measureParam.realtimeTlens - self._state.kjLastShutterTlens)
     print(f"Δlens = {deltaTlens}")
 
     self._state.y16_k0 = self._state.y16_k1
-    self._state.y16_k1 = self._temp.getY16byShutterTemp(self._state.lastFrame.fixedParam.realtimeShutterTemp)
+    self._state.y16_k1 = self._temp.getY16byShutterTemp(self._state.measureParam.realtimeTshutter)
 
     if usingNUC:
       if abs(deltaTlens) > self._state.tFpaDelta:
@@ -202,16 +201,16 @@ class MobirAirDriver:
         f = (deltaS - (self._state.y16_k1 - self._state.y16_k0)) / deltaTlens
 
         if 10 < abs(f) < 100:
-          self._state.kj = int(f * 100)
-          print(f"setting new kj: {self._state.kj}")
+          self._state.measureParam.kj = int(f * 100)
+          print(f"setting new kj: {self._state.measureParam.kj}")
 
         self._state.tFpaDelta = FPATemps.TFPA_DELTA
-        self._state.lastShutterTlens = self._state.lastFrame.fixedParam.realtimeLensTemp
+        self._state.kjLastShutterTlens = self._state.measureParam.realtimeTlens
       else:
         self._state.tFpaDelta = FPATemps.TFPA_DELTA_EXCEPTION
     else:
       self._state.lastAvgShutter = float(np.average(self._state.shutterFrame))
-      self._state.lastShutterTlens = self._state.lastFrame.fixedParam.realtimeLensTemp
+      self._state.kjLastShutterTlens = self._state.measureParam.realtimeTlens
 
 
   ###### DATA ######

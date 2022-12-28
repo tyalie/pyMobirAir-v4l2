@@ -25,9 +25,8 @@ class ShutterHandler:
       self._protocol.setShutter(True)
       time.sleep(0.4)
 
-      if (frame := self._state.lastFrame) is not None:
-        self._state.lastShutterTfpa = frame.fixedParam.realtimeShutterTemp
-        self._state.lastShutterTlens = frame.fixedParam.realtimeLensTemp
+      self._state.measureParam.lastShutterTfpa = self._state.measureParam.realtimeTfpa
+      self._state.measureParam.lastShutterTlens = self._state.measureParam.realtimeTlens
 
       if (self.useNUC):
         self._protocol.doNUC()

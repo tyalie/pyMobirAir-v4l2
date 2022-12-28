@@ -18,6 +18,59 @@ class MobirAirConfig:
   doNUC: bool = True
   useCalib: bool = True
 
+@dataclass
+class MeasureParam:
+  realtimeTshutter: float = 0
+  realtimeTfpa: float = 0
+  realtimeTlens: float = 0
+
+  currChangeRTfpgIdx: int = 0
+
+  lastShutterTshutter: float = 0
+  lastShutterTfpa: float = 0
+  lastShutterTlens: float = 0
+
+  emission: int = 98
+  humidity: int = 79
+  distance: int = 10
+  reflectT: float = 0
+
+  ks: int = 0
+  k0: int = 0
+  k1: int = 0
+  k2: int = 0
+  k3: int = 0
+  k4: int = 0
+  k5: int = 0
+  b: int = 0
+  kf: int = 0
+  kj: int = 10000
+
+  tref: float = 0
+
+
+  def setFromFrame(self, frame: RawFrame, module_tp: Optional[int]):
+    self.realtimeTshutter = frame.fixedParam.realtimeShutterTemp
+    self.realtimeTlens = frame.fixedParam.realtimeLensTemp
+    if module_tp is not None:
+      self.realtimeTfpa = frame.fixedParam.getRealtimeFpaTemp(module_tp)
+
+    self.emission = frame.customParam.emission
+    self.humidity = frame.customParam.humidity
+    self.distance = frame.customParam.distance
+    self.reflectT = frame.customParam.env_temp
+
+    self.ks = frame.customParam.ks
+    self.k0 = frame.customParam.k0
+    self.k1 = frame.customParam.k1
+    self.k2 = frame.customParam.k2
+    self.k3 = frame.customParam.k3
+    self.k4 = frame.customParam.k4
+    self.k5 = frame.customParam.k5
+    self.b  = frame.customParam.b
+    self.kf = frame.customParam.kf
+    self.tref = frame.customParam.tref
+
 
 @dataclass
 class MobirAirState:
@@ -25,7 +78,7 @@ class MobirAirState:
   height: int
   jwbTabNumber: int = 0
 
-  currChangeRTfpgIdx: int = 0
+  measureParam: MeasureParam = field(default_factory=MeasureParam)
 
   module_tp: Optional[int] = None
 
@@ -43,18 +96,13 @@ class MobirAirState:
   config: MobirAirConfig = field(default_factory=MobirAirConfig)
 
   # values
-  lastShutterTfpa: float = 0
-  lastShutterTlens: float = 0
+  kjLastShutterTlens: float = 0
   lastAvgShutter: float = 0
 
   y16_k0: int = 0
   y16_k1: int = 0
 
-  kj: int = 10000
-
   tFpaDelta: float = FPATemps.TFPA_DEFAULT
-
-  lastFrame: Optional[RawFrame] = None
 
   def __post_init__(self):
     # initialize calibration / shutter frame
@@ -64,14 +112,14 @@ class MobirAirState:
     if self.allKdata is None:
       raise Exception
 
-    return self.allKdata[self.currChangeRTfpgIdx]
+    return self.allKdata[self.measureParam.currChangeRTfpgIdx]
 
   @property
   def currCurve(self) -> np.ndarray:
     if self.allCurveData is None:
       raise UninitializedValueAccess()
 
-    n = max(1, self.currChangeRTfpgIdx)
+    n = max(1, self.measureParam.currChangeRTfpgIdx)
     return self.allCurveData[n - 1]
 
   @property
@@ -79,7 +127,7 @@ class MobirAirState:
     if self.allCurveData is None:
       raise UninitializedValueAccess()
 
-    n = max(1, self.currChangeRTfpgIdx)
+    n = max(1, self.measureParam.currChangeRTfpgIdx)
     return self.allCurveData[n]
 
 
