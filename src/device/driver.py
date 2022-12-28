@@ -198,7 +198,7 @@ class MobirAirDriver:
 
         f = (deltaS - (self._state.y16_k1 - self._state.y16_k0)) / deltaTlens
 
-        if 10 < abs(f) < 100:
+        if 10 < abs(f) < 1000:
           self._state.measureParam.kj = int(f * 100)
           print(f"setting new kj: {self._state.measureParam.kj}")
 
