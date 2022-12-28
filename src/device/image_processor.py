@@ -1,4 +1,5 @@
 from device.device_state import MobirAirState
+from device.temputils import MobirAirTempUtils
 from .types import Frame, RawFrame
 import numpy as np
 
@@ -6,7 +7,7 @@ import numpy as np
 class ThermalFrameProcessor:
   def __init__(self, state: MobirAirState) -> None:
     self._state = state
-
+    self._temp = MobirAirTempUtils(state)
 
   def process(self, frame: RawFrame) -> Frame:
     image = np.frombuffer(frame.payload, dtype="<u2") \
@@ -21,6 +22,10 @@ class ThermalFrameProcessor:
       image=image,
       **frame.__dict__
     )
+
+  def _temperature_proc(self, img: np.ndarray):
+    img = self._temp.y16toTemp(img)
+    return (img * 100).astype("i2")
 
   def _handleShutter(self, img: np.ndarray):
     self._state.shutterFrame = img

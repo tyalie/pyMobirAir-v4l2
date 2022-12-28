@@ -69,7 +69,7 @@ class MeasureParam:
     self.k5 = frame.customParam.k5
     self.b  = frame.customParam.b
     self.kf = frame.customParam.kf
-    self.tref = frame.customParam.tref
+    self.tref = frame.customParam.tref / 100
 
 
 @dataclass
