@@ -108,13 +108,13 @@ class MobirAirDriver:
           if self._listener is not None:
             self._listener(frame)
 
+          self._state.measureParam.setFromFrame(raw_frame, self._state.module_tp)
           if frames % 25 == 0:
-            self._state.measureParam.setFromFrame(raw_frame, self._state.module_tp)
             self._changeR()
-
-            self._shutter.automaticShutter()
             frames = 0
           frames += 1
+
+          self._shutter.automaticShutter()
 
 
 
