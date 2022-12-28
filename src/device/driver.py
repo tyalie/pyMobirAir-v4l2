@@ -180,7 +180,6 @@ class MobirAirDriver:
       print("Warn: couldn't find last frame")
       return
 
-
     deltaTlens = (self._state.lastFrame.fixedParam.realtimeLensTemp - self._state.lastShutterTlens)
     print(f"Δlens = {deltaTlens}")
 
@@ -191,8 +190,6 @@ class MobirAirDriver:
       if abs(deltaTlens) > self._state.tFpaDelta:
         if self._state.y16_k0 == 0:
           self._state.y16_k1 = self._state.y16_k0
-
-        breakpoint()
 
         lastLastAvgShutter = self._state.lastAvgShutter
         self._state.lastAvgShutter = float(np.average(self._state.shutterFrame))
@@ -205,8 +202,8 @@ class MobirAirDriver:
         f = (deltaS - (self._state.y16_k1 - self._state.y16_k0)) / deltaTlens
 
         if 10 < abs(f) < 100:
-          print(f"setting new kj: {self._state.kj}")
           self._state.kj = int(f * 100)
+          print(f"setting new kj: {self._state.kj}")
 
         self._state.tFpaDelta = FPATemps.TFPA_DELTA
         self._state.lastShutterTlens = self._state.lastFrame.fixedParam.realtimeLensTemp
