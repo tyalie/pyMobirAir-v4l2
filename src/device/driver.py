@@ -2,8 +2,9 @@ from typing import Callable
 import usb.core
 import numpy as np
 
-from device.device_state import MobirAirState
+from device.device_state import FPATemps, MobirAirState
 from device.shutterhandling import ShutterHandler
+from device.temputils import MobirAirTempUtils
 from .usb_wrapper import MobirAirUSBWrapper
 from .types import Frame, RawFrame
 from .parser import MobirAirParser
@@ -30,6 +31,9 @@ class MobirAirDriver:
     self._parser = MobirAirParser(self._state)
     self._img_proc = ThermalFrameProcessor(self._state)
     self._shutter = ShutterHandler(self._protocol, self._state)
+    self._shutter.setShutterFinishCallback(self._afterShutterCallback)
+
+    self._temp = MobirAirTempUtils(self._state)
 
     # register incoming data listener
     self._enable_recv_thread = Event()
@@ -93,9 +97,10 @@ class MobirAirDriver:
         data = data.tobytes()
 
         raw_frame = self._parser.parse_stream(data)
-        self._state.lastFrame = raw_frame
 
         if raw_frame is not None:
+          self._state.lastFrame = raw_frame
+
           frame = self._img_proc.process(raw_frame)
 
           _t_end = time.monotonic_ns()
@@ -108,6 +113,8 @@ class MobirAirDriver:
           if frames % 25 == 0:
             self._changeR(raw_frame)
           frames += 1
+
+          self._shutter.automaticShutter()
 
       except usb.core.USBTimeoutError:
         print("timeout")
@@ -127,7 +134,6 @@ class MobirAirDriver:
       return
 
     realtimeTfpa = frame.fixedParam.getRealtimeFpaTemp(self._state.module_tp) * 100
-    print(realtimeTfpa)
 
     if self._state.jwbTabArrShort is None:
       print("warn: jwbTabArrShort not initialized")
@@ -164,6 +170,51 @@ class MobirAirDriver:
       self._state.currChangeRTfpgIdx = changeRidx
       self._protocol.setChangeR(changeRidx)
       self._shutter.manualShutter()
+
+  #### shuttering ####
+  def _afterShutterCallback(self, usingNUC: bool):
+    self.calcMeasureKj(usingNUC)
+
+  def calcMeasureKj(self, usingNUC: bool):
+    if self._state.lastFrame is None:
+      print("Warn: couldn't find last frame")
+      return
+
+
+    deltaTlens = (self._state.lastFrame.fixedParam.realtimeLensTemp - self._state.lastShutterTlens)
+    print(f"Δlens = {deltaTlens}")
+
+    self._state.y16_k0 = self._state.y16_k1
+    self._state.y16_k1 = self._temp.getY16byShutterTemp(self._state.lastFrame.fixedParam.realtimeShutterTemp)
+
+    if usingNUC:
+      if abs(deltaTlens) > self._state.tFpaDelta:
+        if self._state.y16_k0 == 0:
+          self._state.y16_k1 = self._state.y16_k0
+
+        breakpoint()
+
+        lastLastAvgShutter = self._state.lastAvgShutter
+        self._state.lastAvgShutter = float(np.average(self._state.shutterFrame))
+
+        if lastLastAvgShutter == 0:
+          lastLastAvgShutter = self._state.lastAvgShutter
+
+        deltaS = self._state.lastAvgShutter - lastLastAvgShutter
+
+        f = (deltaS - (self._state.y16_k1 - self._state.y16_k0)) / deltaTlens
+
+        if 10 < abs(f) < 100:
+          print(f"setting new kj: {self._state.kj}")
+          self._state.kj = int(f * 100)
+
+        self._state.tFpaDelta = FPATemps.TFPA_DELTA
+        self._state.lastShutterTlens = self._state.lastFrame.fixedParam.realtimeLensTemp
+      else:
+        self._state.tFpaDelta = FPATemps.TFPA_DELTA_EXCEPTION
+    else:
+      self._state.lastAvgShutter = float(np.average(self._state.shutterFrame))
+      self._state.lastShutterTlens = self._state.lastFrame.fixedParam.realtimeLensTemp
 
 
   ###### DATA ######

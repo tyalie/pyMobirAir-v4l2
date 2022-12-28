@@ -3,6 +3,8 @@ import dataclasses
 from dataclasses import dataclass
 import numpy as np
 
+from device.temputils import MobirAirTempUtils
+
 def bytefield(location: int, length: int = 2, order: str = "little", signed: bool = False):
   return dataclasses.field(
     metadata=dict(location=location, length=length, order=order, signed=signed)
@@ -14,9 +16,9 @@ class FixedParamLine:
   height: int = bytefield(0x6)
   device_name: str = bytefield(0x8, 8)
 
-  startupShutterTemp: int = bytefield(0x10)
-  realtimeShutterTemp: int = bytefield(0x12)
-  realtimeLensTemp: int = bytefield(0x14)
+  _startupShutterTemp: int = bytefield(0x10)
+  _realtimeShutterTemp: int = bytefield(0x12)
+  _realtimeLensTemp: int = bytefield(0x14)
   _realtimeFpaTemp: int = bytefield(0x16)
 
   isShuttering: bool = bytefield(0x18)
@@ -27,19 +29,19 @@ class FixedParamLine:
     return raw_to_dataclass(cls, raw)
 
   def getRealtimeFpaTemp(self, module_tp: int) -> float:
-    """ realtimeTfpa from the camera itself isn't the value
-    that is further used, but instead a transformed value of it.
-    The calculation depends on the moduleTP number.
+    return MobirAirTempUtils.getFpaTemp(self._realtimeFpaTemp, module_tp)
 
-    The numbers here are taken directly from the app.
-    """
+  @property
+  def realtimeLensTemp(self) -> float:
+    return MobirAirTempUtils.getParamTemp(self._realtimeLensTemp)
 
-    if module_tp not in [0x2, 0x3]:
-      v_ = (33818e4 - self._realtimeFpaTemp * 18181) / 1e3
-    else:
-      v_ = (self._realtimeFpaTemp * -0.0201 + 371.29) * 100
+  @property
+  def realtimeShutterTemp(self) -> float:
+    return MobirAirTempUtils.getParamTemp(self._realtimeShutterTemp)
 
-    return int(v_) / 100
+  @property
+  def startupShutterTemp(self) -> float:
+    return MobirAirTempUtils.getParamTemp(self._startupShutterTemp)
 
 
 @dataclass()

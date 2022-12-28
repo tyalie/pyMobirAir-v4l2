@@ -1,4 +1,5 @@
 import time
+from typing import Callable, Optional
 from device.device_state import MobirAirState
 from device.protocol import MobirAirUSBProtocol
 from threading import Thread, Lock
@@ -12,6 +13,11 @@ class ShutterHandler:
     self.useNUC = True
     self._previous_shutter = 0
     self._thread_lock = Lock()
+
+    self._shutter_finish_callback: Optional[Callable[[bool],None]] = None
+
+  def setShutterFinishCallback(self, callback: Callable[[bool], None]):
+    self._shutter_finish_callback = callback
 
   def doShutter(self):
     with self._thread_lock:
@@ -28,6 +34,8 @@ class ShutterHandler:
         time.sleep(2)
 
       self._protocol.setShutter(False)
+      if self._shutter_finish_callback is not None:
+        self._shutter_finish_callback(self.useNUC)
 
   @property
   def canDoShutter(self):
@@ -38,3 +46,6 @@ class ShutterHandler:
       Thread(target=self.doShutter).start()
 
 
+  def automaticShutter(self):
+    if (time.time() - self._previous_shutter) > 30:
+      Thread(target=self.doShutter).start()
