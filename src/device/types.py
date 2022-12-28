@@ -10,6 +10,11 @@ def bytefield(location: int, length: int = 2, order: str = "little", signed: boo
     metadata=dict(location=location, length=length, order=order, signed=signed)
   )
 
+def bitfield(location: int, bits: int, length: int = 2):
+  return dataclasses.field(
+    metadata=dict(location=location, bits=bits, length=length)
+  )
+
 @dataclass()
 class FixedParamLine:
   width: int = bytefield(0x4)
@@ -45,10 +50,44 @@ class FixedParamLine:
 
 
 @dataclass()
+class CustomParamLine:
+  temp_range: int = bytefield(0x60)
+
+  customParamInit: int = bytefield(0x63, length=1)
+  humidity: int = bytefield(0x65, length=1)
+  emission: int = bytefield(0x64, length=1)
+  distance: int = bitfield(0x66, 0x003f)
+  env_temp: int = bitfield(0x66, 0x7fc0)
+
+  brightness: int = bytefield(0x69, length=1)
+  contrast: int = bytefield(0x68, length=1)
+
+  frequency_hz: int = bitfield(0x6a, 0xf0)
+
+  autotiming_shutter: bool = bitfield(0x6c, 0b1)
+
+  ks: int = bytefield(0x90)
+  k0: int = bytefield(0x92)
+  k1: int = bytefield(0x94)
+  k2: int = bytefield(0x96)
+  k3: int = bytefield(0x98)
+  k4: int = bytefield(0x9a)
+  k5: int = bytefield(0x9c)
+  b: int = bytefield(0x9e)
+  kf: int = bytefield(0xa0)
+  tref: int = bytefield(0xa2)
+
+  @classmethod
+  def new(cls, raw: bytes) -> 'CustomParamLine':
+    return raw_to_dataclass(cls, raw)
+
+
+@dataclass()
 class RawFrame:
   header: bytes
   payload: bytes
   fixedParam: FixedParamLine
+  customParam: CustomParamLine
 
   @property
   def raw(self) -> bytes:
@@ -69,7 +108,12 @@ def raw_to_dataclass(dataclass: Type, raw: bytes):
     val = None
 
     if field.type == int or field.type == bool:
-      val = int.from_bytes(segment, byteorder=meta["order"], signed=meta["signed"])
+      if "bits" not in meta:
+        val = int.from_bytes(segment, byteorder=meta["order"], signed=meta["signed"])
+      else:
+        val = int.from_bytes(segment, byteorder="little", signed=False)
+        val = (val & meta["bits"]) >> (bin(meta["bits"]).rindex("1") - 1)
+
       if field.type == bool:
         val = bool(val)
 

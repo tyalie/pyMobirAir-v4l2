@@ -2,7 +2,7 @@ from typing import Optional
 import numpy as np
 from device.device_state import MobirAirState
 
-from device.types import FixedParamLine, RawFrame
+from device.types import CustomParamLine, FixedParamLine, RawFrame
 
 class MobirAirParser:
   FRAME_START = bytes.fromhex("55aa2700")
@@ -36,11 +36,14 @@ class MobirAirParser:
     if fixedParam.width != self.width or fixedParam.height != self.height:
       raise Exception(f"Frame parser came across frame with invalid size {fixedParam.width}x{fixedParam.height}")
 
+    customParam = CustomParamLine.new(header)
+
 
     return RawFrame(
       header=header,
       payload=raw[self.FRAME_HEADER_LENGTH:],
-      fixedParam=fixedParam
+      fixedParam=fixedParam,
+      customParam=customParam
     )
 
   @property
