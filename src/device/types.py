@@ -1,4 +1,4 @@
-from typing import Tuple, Type
+from typing import Type
 import dataclasses
 from dataclasses import dataclass
 import numpy as np

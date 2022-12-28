@@ -1,6 +1,5 @@
 from device.device_state import MobirAirState
 from .types import Frame, RawFrame
-from dataclasses import asdict
 import numpy as np
 
 

@@ -6,7 +6,7 @@ from device.device_state import FPATemps, MobirAirState
 from device.shutterhandling import ShutterHandler
 from device.temputils import MobirAirTempUtils
 from .usb_wrapper import MobirAirUSBWrapper
-from .types import Frame, RawFrame
+from .types import Frame
 from .parser import MobirAirParser
 from .image_processor import ThermalFrameProcessor
 from .protocol import MobirAirUSBProtocol

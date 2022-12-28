@@ -1,5 +1,4 @@
 from typing import Optional
-import numpy as np
 from device.device_state import MobirAirState
 
 from device.types import CustomParamLine, FixedParamLine, RawFrame

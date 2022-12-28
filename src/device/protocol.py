@@ -1,4 +1,3 @@
-from typing import Optional
 from .usb_wrapper import MobirAirUSBWrapper
 
 class USBReadFailedException(Exception):
