@@ -1,3 +1,4 @@
+import logging
 from typing import Callable
 import usb.core
 import numpy as np
@@ -104,7 +105,7 @@ class MobirAirDriver:
 
           _t_end = time.monotonic_ns()
           if _t_end - _t_start > 15e6:
-            print(f"Δt = {(_t_end - _t_start) / 1e6:.2f}ms")
+            logging.warn(f"Δt = {(_t_end - _t_start) / 1e6:.2f}ms")
 
           if self._listener is not None:
             self._listener(frame)
@@ -118,9 +119,9 @@ class MobirAirDriver:
           self._shutter.automaticShutter()
 
       except usb.core.USBTimeoutError:
-        print("timeout")
+        logging.warn("timeout")
       except usb.core.USBError as e:
-        print("Stopping receive")
+        logging.error("Stopping receive")
         raise e
 
   def _changeR(self):
@@ -137,7 +138,7 @@ class MobirAirDriver:
     realtimeTfpa = self._state.measureParam.realtimeTfpa * 100
 
     if self._state.jwbTabArrShort is None:
-      print("warn: jwbTabArrShort not initialized")
+      logging.warn("jwbTabArrShort not initialized")
       return
 
     changeRidx = 1
@@ -167,7 +168,7 @@ class MobirAirDriver:
         changeRidx += 1
 
     if self._state.measureParam.currChangeRTfpgIdx != changeRidx:
-      print(f"Setting new changeRidx: {changeRidx}")
+      logging.debug(f"Setting new changeRidx: {changeRidx}")
       self._state.measureParam.currChangeRTfpgIdx = changeRidx
       self._protocol.setChangeR(changeRidx)
       self._shutter.manualShutter()
@@ -179,7 +180,7 @@ class MobirAirDriver:
 
   def calcMeasureKj(self, usingNUC: bool):
     deltaTlens = (self._state.measureParam.realtimeTlens - self._state.kjLastShutterTlens)
-    print(f"Δlens = {deltaTlens}")
+    logging.debug(f"Δlens = {deltaTlens}")
 
     self._state.y16_k0 = self._state.y16_k1
     self._state.y16_k1 = self._temp.getY16byShutterTemp(self._state.measureParam.realtimeTshutter)
@@ -201,7 +202,7 @@ class MobirAirDriver:
 
         if 10 < abs(f) < 1000:
           self._state.measureParam.kj = int(f * 100)
-          print(f"setting new kj: {self._state.measureParam.kj}")
+          logging.debug(f"setting new kj: {self._state.measureParam.kj}")
 
         self._state.tFpaDelta = FPATemps.TFPA_DELTA
         self._state.kjLastShutterTlens = self._state.measureParam.realtimeTlens
@@ -235,5 +236,3 @@ class MobirAirDriver:
     curve = np.frombuffer(curve_raw, dtype="<u2") \
       .reshape((self._state.jwbTabNumber, 1700))
     self._state.allCurveData = curve
-
-    print(f"state: {self._state}")

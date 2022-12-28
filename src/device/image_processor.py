@@ -2,6 +2,7 @@ from device.device_state import MobirAirState
 from device.temputils import MobirAirTempUtils
 from .types import Frame, RawFrame
 import numpy as np
+import logging
 
 
 class ThermalFrameProcessor:
@@ -44,7 +45,7 @@ class ThermalFrameProcessor:
 
   def doNUCbyTwoPoint(self, img: np.ndarray) -> np.ndarray:
     if self._state.allKdata is None:
-      print("Error: allKdata is none")
+      logging.error("allKdata is none")
       return img
 
     # `∀i: y16arr[i] = ⌊ avgSingleB + (frame[i] - bArr[i]) * kArr[i] / 2¹³ ⌋`

@@ -1,5 +1,6 @@
 import usb.core
 import usb.util
+import logging
 
 
 class MobirAirUSBWrapper:
@@ -46,7 +47,7 @@ class MobirAirUSBWrapper:
     return self._endpoint_in
 
   def __del__(self):
-    print("disposing")
+    logging.info("disposing")
     usb.util.dispose_resources(self._dev)
 
 
@@ -73,11 +74,11 @@ class MobirAirUSBWrapper:
         timeouts -= 1
 
       if timeouts == 0:
-        print(f"Warn: run into timeout limit. Received {len(buffer)} bytes")
+        logging.warn(f"run into timeout limit. Received {len(buffer)} bytes")
         return None
 
     if len(buffer) > length:
-      print(f"Warn: expected buffer with length {length}, but got {len(buffer)}")
+      logging.warn(f"expected buffer with length {length}, but got {len(buffer)}")
     return buffer[:length]
 
 

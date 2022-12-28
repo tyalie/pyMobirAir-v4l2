@@ -6,6 +6,9 @@ import sys
 import time
 import numpy as np
 from matplotlib import pyplot as plt
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 def abs_diff(img1, img2):
   a = img1 - img2
@@ -16,7 +19,7 @@ def abs_diff(img1, img2):
 driver = None
 
 def sigint_handler(sig, frame):
-  print("Handled sigint")
+  logging.info("Handled sigint")
   try:
     if driver is not None:
       driver.stop()
@@ -34,7 +37,7 @@ def main():
     nonlocal frame_count
 
     if frame_count % 25 == 0:
-      print(f"Δtemps = {np.min(f.image) / 100} - {np.max(f.image) / 100} °C")
+      logging.debug(f"Δtemps = {np.min(f.image) / 100} - {np.max(f.image) / 100} °C")
     frame_count += 1
 
     stream.write(f.image.tobytes(order='C'))
@@ -42,7 +45,7 @@ def main():
   driver = MobirAirDriver()
   driver.set_frame_listener(listener)
   driver.stop_stream()
-  print("Device:", driver._protocol.getDeviceSN().decode("UTF-8"))
+  logging.info(f"Device: {driver._protocol.getDeviceSN().decode('UTF-8')}")
 
   driver.start_stream()
 

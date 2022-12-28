@@ -3,6 +3,7 @@ from typing import Callable, Optional
 from device.device_state import MobirAirState
 from device.protocol import MobirAirUSBProtocol
 from threading import Thread, Lock
+import logging
 
 
 class ShutterHandler:
@@ -21,6 +22,7 @@ class ShutterHandler:
 
   def doShutter(self):
     with self._thread_lock:
+      logging.info("Doing calibration")
       self._previous_shutter = time.time()
       self._protocol.setShutter(True)
       time.sleep(0.4)

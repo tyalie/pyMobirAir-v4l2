@@ -1,7 +1,9 @@
 from typing import Optional
+
 from device.device_state import MobirAirState
 
 from device.types import CustomParamLine, FixedParamLine, RawFrame
+import logging
 
 class MobirAirParser:
   FRAME_START = bytes.fromhex("55aa2700")
@@ -19,7 +21,7 @@ class MobirAirParser:
 
     if i >= 0 and (len(self._stream) - i) >= self.frame_size:
       if i > 0:
-        print(f"parser: i started with offset {i}")
+        logging.warn(f"parser: i started with offset {i}")
 
       frame_data = self._stream[i:i + self.frame_size]
       # resize stream data
