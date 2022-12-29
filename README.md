@@ -4,7 +4,8 @@ This is a user space driver for the USB-C [Guide MobIR Air][mobirair-product-pag
 It uses `libusb` and [`v4l2loopback`][v4l2loopback] to realize this.
 
 > Disclaimer: Most of the algorithms here have been reverse engineered from
-> the MobIR Android app.
+> the MobIR Android app. (I'm an EU citizen and this is a tool to increase
+> compatibility with the named thermal camera)
 
 
 ## Usage
