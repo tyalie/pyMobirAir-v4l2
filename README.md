@@ -24,8 +24,9 @@ and install all dependencies (see `requirements.txt`).
 python3 -m pip install -r requirements.txt
 ```
 
-Afterwards one can start the driver with `./src/main.py`. It needs to be noted here,
-that the script requires the thermal camera to be already connected to the host device.
+Afterwards one can start the driver with `./src/main.py -l /dev/videoX`. It needs to be 
+noted here, that the script requires the thermal camera to be already connected to the 
+host device.
 
 The `/dev/videoX` feed is a Y16 RAW feed, with a single pixel being Kelvin values *
 100.

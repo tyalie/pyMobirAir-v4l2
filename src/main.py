@@ -5,6 +5,7 @@ import signal
 import sys
 import numpy as np
 import logging
+import argparse
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -25,11 +26,11 @@ def sigint_handler(sig, frame):
     sys.exit(0)
 
 
-def main():
+def main(video_device: str):
   global driver
   signal.signal(signal.SIGINT, sigint_handler)
 
-  stream = create_loopback("/dev/video2", MobirAirDriver.WIDTH, MobirAirDriver.HEIGHT - MobirAirDriver.REF_HEIGHT)
+  stream = create_loopback(video_device, MobirAirDriver.WIDTH, MobirAirDriver.HEIGHT - MobirAirDriver.REF_HEIGHT)
   frame_count = 0
   def listener(f: Frame):
     nonlocal frame_count
@@ -49,4 +50,12 @@ def main():
 
 
 if __name__ == "__main__":
-  main()
+  parser = argparse.ArgumentParser()
+  parser.add_argument(
+    "-l", "--loopback",
+    help="Path to the loopback device (e.g. /dev/videoX)", required=True
+  )
+
+  args = parser.parse_args()
+
+  main(args.loopback)
