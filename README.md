@@ -37,6 +37,9 @@ The `/dev/videoX` feed is a Y16 RAW feed, with a single pixel being Kelvin value
 
 ### Notes
 
+> [!NOTE]
+> See the "notes" branch for my WIP write-up on this project.
+
 1. A cold start of the camera requires about a minute until the temperature stabilizes
    consistently. Before that point the measured temperature will fall rapidly into
    impossible ranges (e.g. negative °C) and return into a feasible range during each
